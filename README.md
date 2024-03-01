@@ -25,6 +25,7 @@ You need:
 - The URL of your matrix homeserver
 - A matrix token. I strongly suggest you use an account separate from your "normal" one
 - A matrix room **without** E2EE, with the "alerting" user in it
+- The ID of that room
 - Your grafana needs to be able to make http requests to the relay
 
 ### What is my matrix homeserver url?
@@ -39,6 +40,12 @@ the returned json.
 
 That depends on your client, in Element, you need to un-toggle a switch when creating
 the room. Note that you **can not** downgrade an existing, encrypted room.
+
+### How do I get the room ID?
+
+Again: Depends on your client. In Element: `Open room` -> `Dropdown at the Top` ->
+`Settings` -> `Advanced`. They seem to always start with `!` and end with
+`:example.com`.
 
 ### Why should I use a separate user?
 
