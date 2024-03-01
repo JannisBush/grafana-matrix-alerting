@@ -1,5 +1,9 @@
 name: "grafana-matrix-alerting"
 
+# Un-comment this to add the container to an existing network
+# networks:
+#   network-of_grafana_container:
+#     external: true
 
 services:
   relay:
@@ -7,9 +11,9 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile
+    # Un-comment this to add the container to an existing network
     # networks:
-    #   my-grafana-network:
-    #     external: true
+    #   network-of_grafana_container:
     ports:
       - 127.0.0.1:9024:9024
     env_file: .env
