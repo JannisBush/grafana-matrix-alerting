@@ -49,7 +49,7 @@ class Server:
 
         app.add_routes([web.put("/alert", self.handle_alert)])
 
-    async def get_message_id(self):
+    async def get_message_id(self) -> str:
         async with self._msg_id_lock:
             now = monotonic_ns()
             if now == self._last_time:
@@ -58,7 +58,8 @@ class Server:
                 self._last_counter = 1
             return f"{now}{self._last_counter}"
 
-    def parse_alert(self, alert: Dict[str, Any]) -> str:
+    @staticmethod
+    def parse_alert(alert: Dict[str, Any]) -> str:
         # TODO: Parse ROOM from message?
         labels = alert["labels"]
         name = labels.pop("alertname")
