@@ -1,0 +1,15 @@
+name: "grafana-matrix-alerting"
+
+
+services:
+  relay:
+    image: grafana-matrix-relay
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    # networks:
+    #   my-grafana-network:
+    #     external: true
+    ports:
+      - 127.0.0.1:9024:9024
+    env_file: .env

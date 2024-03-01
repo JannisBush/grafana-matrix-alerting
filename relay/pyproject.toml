@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "grafana-matrix-alerting"
+version = "0.1.0"
+description = ""
+authors = ["Niklas Beierl <22919961+NiklasBeierl@users.noreply.github.com>"]
+readme = "../README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+aiohttp = "^3.9.3"
+python-dotenv = "^1.0.1"
+
+[tool.poetry.group.dev.dependencies]
+mypy = "^1.8.0"
+black = "^24.2.0"
+
+
+[tool.poetry.group.ecs.dependencies]
+ecs-logging = "^2.1.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.mypy]
+packages = "grafana_matrix_alerting"
+check_untyped_defs = true
