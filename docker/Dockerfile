@@ -1,4 +1,4 @@
-FROM python:3.11-alpine as deps
+FROM python:3.11-alpine
 
 # Install poetry in its own venv
 # https://python-poetry.org/docs/#installing-manually
