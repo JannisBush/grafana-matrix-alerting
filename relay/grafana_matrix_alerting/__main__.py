@@ -22,15 +22,17 @@ BEARER_TOKEN_RE = re.compile("^Bearer +([a-zA-Z0-9-._~+\/]+=*)$")
 class Server:
     def __init__(
         self,
-        home_server_url: str,
-        access_token: str,
-        default_room: str,
+        hook_url: str | None,
+        home_server_url: str | None,
+        access_token: str | None,
+        default_room: str | None,
         relay_token: str | None,
         app: Application,
     ):
         self.home_server_url = home_server_url
         self.access_token = access_token
         self.default_room = default_room
+        self.hook_url = hook_url
 
         self.relay_token = relay_token
         if relay_token:
@@ -63,8 +65,12 @@ class Server:
         # TODO: Parse ROOM from message?
         labels = alert["labels"]
         name = labels.pop("alertname")
-        as_string = f"{name} is {alert['status']}:\n  "
-        as_string += "\n  ".join(f"{k}: {v}" for k, v in labels.items())
+        as_string = f"{name} is {alert['status']}:\n"
+        try:
+            as_string += alert["annotations"]["summary"]
+        except Exception as e:
+            logger.warning(e)
+            as_string += "\n  ".join(f"{k}: {v}" for k, v in labels.items())
         return as_string
 
     def make_message(self, webhook_data: Dict[str, Any]) -> str:
@@ -111,15 +117,24 @@ class Server:
         mid = await self.get_message_id()
 
         async with ClientSession() as http:
-            res = await http.put(
-                f"{self.home_server_url}/_matrix/client/v3/rooms/{self.default_room}"
-                f"/send/m.room.message/{mid}",
-                headers={"Authorization": f"Bearer {self.access_token}"},
-                json={
-                    "msgtype": "m.text",
-                    "body": message,
-                },
-            )
+            if self.home_server_url:
+                res = await http.put(
+                    f"{self.home_server_url}/_matrix/client/v3/rooms/{self.default_room}"
+                    f"/send/m.room.message/{mid}",
+                    headers={"Authorization": f"Bearer {self.access_token}"},
+                    json={
+                        "msgtype": "m.text",
+                        "body": message,
+                    },
+                )
+            else:
+               res = await http.post(
+                    f"{self.hook_url}",
+                    json={
+                        "username": "Grafana Relay",
+                        "text": message.replace("\n", "  \n"),
+                    },
+                )
             res.raise_for_status()
 
 
@@ -127,7 +142,7 @@ class ConfigurationMissing(Exception):
     ...
 
 
-_MATRIX_SERVER_ARGS = ["home_server_url", "access_token", "default_room"]
+_MATRIX_SERVER_ARGS = ["hook_url", "home_server_url", "access_token", "default_room"]
 
 if __name__ == "__main__":
     from argparse import ArgumentParser
@@ -172,7 +187,16 @@ if __name__ == "__main__":
         if from_args := getattr(args, arg):
             instance_args[arg] = from_args
         else:
-            if not (from_env := os.environ.get(f"MATRIX_{arg.upper()}")):
+            # We need either a hook_url or all other settings
+            if arg == "hook_url":
+                from_env = os.environ.get(f"MATRIX_{arg.upper()}")
+                instance_args[arg] = from_env
+                if from_env:
+                    instance_args["home_server_url"] = None
+                    instance_args["access_token"] = None
+                    instance_args["default_room"] = None
+                    break
+            elif not (from_env := os.environ.get(f"MATRIX_{arg.upper()}")):
                 raise ConfigurationMissing(
                     f"No {arg} provided. You must pass --{arg} or set "
                     f"MATRIX_{arg.upper()} in the env vars."
